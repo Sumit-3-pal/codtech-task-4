@@ -1,33 +1,101 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
-void runLengthEncode(char *input) {
-    int i, count;
-    int length = strlen(input);
-
-    printf("Encoded Output: ");
-
-    for (i = 0; i < length; i++) {
-        // Count occurrences of current character
-        count = 1;
-        while (i < length - 1 && input[i] == input[i + 1]) {
+char* compressRLE(const char* input) {
+    if (input == NULL || *input == '\0') return strdup("");
+    size_t input_len = strlen(input);
+    char* compressed = (char*)malloc(input_len * 2 + 1);
+    if (compressed == NULL) {
+        perror("Failed to allocate memory for compression");
+        return NULL;
+    }
+    int i = 0, j = 0;
+    while (i < input_len) {
+        char current_char = input[i];
+        int count = 0;
+        while (i < input_len && input[i] == current_char) {
             count++;
             i++;
         }
-        // Print character followed by count
-        printf("%c%d", input[i], count);
+        compressed[j++] = current_char;
+        char count_str[12];
+        sprintf(count_str, "%d", count);
+        for (int k = 0; count_str[k] != '\0'; k++) {
+            compressed[j++] = count_str[k];
+        }
     }
+    compressed[j] = '\0';
+    return compressed;
+}
 
-    printf("\n");
+char* decompressRLE(const char* input) {
+    if (input == NULL || *input == '\0') return strdup("");
+    size_t input_len = strlen(input);
+    char* decompressed = (char*)malloc(input_len * 10 + 1);
+    if (decompressed == NULL) {
+        perror("Failed to allocate memory for decompression");
+        return NULL;
+    }
+    int i = 0, j = 0;
+    while (i < input_len) {
+        char current_char = input[i++];
+        int count = 0;
+        while (i < input_len && input[i] >= '0' && input[i] <= '9') {
+            count = count * 10 + (input[i] - '0');
+            i++;
+        }
+        for (int k = 0; k < count; k++) {
+            decompressed[j++] = current_char;
+        }
+    }
+    decompressed[j] = '\0';
+    return decompressed;
 }
 
 int main() {
-    char input[100];
+    const char* original_data1 = "AAAABBBCCDAA";
+    const char* original_data2 = "WWWWWWWWWWWWBWWWWWWWWWWWWBBBWWWWWWWWWWWWWWWWWWWWWWWWB";
+    const char* original_data3 = "ABCDEFG";
 
-    printf("Enter a string to compress using RLE: ");
-    scanf("%s", input);
+    printf("Original Data 1: %s\n", original_data1);
+    char* compressed_data1 = compressRLE(original_data1);
+    if (compressed_data1) {
+        printf("Compressed Data 1: %s (Length: %zu)\n", compressed_data1, strlen(compressed_data1));
+        char* decompressed_data1 = decompressRLE(compressed_data1);
+        if (decompressed_data1) {
+            printf("Decompressed Data 1: %s\n", decompressed_data1);
+            printf("Matches original: %s\n\n", strcmp(original_data1, decompressed_data1) == 0 ? "Yes" : "No");
+            free(decompressed_data1);
+        }
+        free(compressed_data1);
+    }
 
-    runLengthEncode(input);
+    printf("Original Data 2: %s\n", original_data2);
+    char* compressed_data2 = compressRLE(original_data2);
+    if (compressed_data2) {
+        printf("Compressed Data 2: %s (Length: %zu)\n", compressed_data2, strlen(compressed_data2));
+        char* decompressed_data2 = decompressRLE(compressed_data2);
+        if (decompressed_data2) {
+            printf("Decompressed Data 2: %s\n", decompressed_data2);
+            printf("Matches original: %s\n\n", strcmp(original_data2, decompressed_data2) == 0 ? "Yes" : "No");
+            free(decompressed_data2);
+        }
+        free(compressed_data2);
+    }
+
+    printf("Original Data 3: %s\n", original_data3);
+    char* compressed_data3 = compressRLE(original_data3);
+    if (compressed_data3) {
+        printf("Compressed Data 3: %s (Length: %zu)\n", compressed_data3, strlen(compressed_data3));
+        char* decompressed_data3 = decompressRLE(compressed_data3);
+        if (decompressed_data3) {
+            printf("Decompressed Data 3: %s\n", decompressed_data3);
+            printf("Matches original: %s\n", strcmp(original_data3, decompressed_data3) == 0 ? "Yes" : "No");
+            free(decompressed_data3);
+        }
+        free(compressed_data3);
+    }
 
     return 0;
 }
